@@ -57,7 +57,7 @@ const fmt = new Intl.DateTimeFormat("es-VE", {
 });
 
 export function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "—";
+  if (!dateStr) return "Sin fecha";
   const d = new Date(dateStr);
-  return Number.isNaN(d.getTime()) ? "—" : fmt.format(d);
+  return Number.isNaN(d.getTime()) ? "Sin fecha" : fmt.format(d);
 }

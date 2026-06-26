@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ReportForm } from "@/components/report-form";
 
 export const metadata: Metadata = {
-  title: "Reportar Persona Desaparecida — SOSVEN",
+  title: "Reportar Persona Desaparecida · SOSVEN",
   description:
     "Completa el formulario para reportar a una persona desaparecida tras el terremoto en Venezuela. Mientras más información, mejor.",
 };

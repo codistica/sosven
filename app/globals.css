@@ -15,8 +15,8 @@
   --color-flag-red: #cf142b;
   --color-alert: #dc2626;
   --color-alert-700: #b91c1c;
-  --color-success: #15803d;
-  --color-success-600: #16a34a;
+  --color-success: #0e7035;
+  --color-success-600: #0f7a38;
   --color-ink: #0f172a;
   --color-muted: #64748b;
   --color-line: #e2e8f0;
@@ -31,8 +31,34 @@
   --foreground: #0f172a;
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Consistent, visible keyboard focus for every interactive element. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Respect users who prefer reduced motion: drop transitions/animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 body {

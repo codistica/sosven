@@ -104,7 +104,10 @@ export function ReportForm() {
       </Panel>
 
       {state.error && (
-        <p className="rounded-lg border border-flag-red/30 bg-flag-red/5 px-4 py-3 text-sm font-medium text-flag-red">
+        <p
+          role="alert"
+          className="rounded-lg border border-flag-red/30 bg-flag-red/5 px-4 py-3 text-sm font-medium text-flag-red"
+        >
           {state.error}
         </p>
       )}

@@ -11,7 +11,7 @@ import mongoose from "mongoose";
  * sample data so it still renders on first deploy / `npm run dev`.
  */
 const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || "sosven";
+const dbName = process.env.MONGODB_DB || "sosven-server-dev";
 
 export const hasDatabase = Boolean(uri);
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Ayuda — SOSVEN",
+  title: "Ayuda · SOSVEN",
   description: "Cómo usar SOSVEN para buscar, reportar y ayudar a reunir familias.",
 };
 

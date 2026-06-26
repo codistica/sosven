@@ -62,7 +62,7 @@ export default async function PersonPage({
 
       {nuevo && (
         <div className="mt-4 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-success">
-          Reporte publicado. Gracias por ayudar a difundir la búsqueda — comparte
+          Reporte publicado. Gracias por ayudar a difundir la búsqueda. Comparte
           este perfil para llegar a más personas.
         </div>
       )}
@@ -90,7 +90,7 @@ export default async function PersonPage({
               </h1>
               <div className="mt-2 flex flex-wrap gap-2 text-sm">
                 <Chip>{ageLabel(person.age)}</Chip>
-                <Chip>{GENDER_LABEL[person.gender] ?? "—"}</Chip>
+                <Chip>{GENDER_LABEL[person.gender] ?? "Sin especificar"}</Chip>
                 {person.lastSeenCity && <Chip>{person.lastSeenCity}</Chip>}
               </div>
             </div>

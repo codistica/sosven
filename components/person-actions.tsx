@@ -41,7 +41,11 @@ export function FoundReportPanel({ personId }: { personId: string }) {
           <Field name="location" label="¿Dónde la viste?" placeholder="Lugar o referencia" />
           <Textarea name="details" label="Detalles" placeholder="Describe lo que sabes…" />
           <Field name="contact" label="Tu contacto" placeholder="Teléfono o correo" />
-          {state.error && <p className="text-sm text-flag-red">{state.error}</p>}
+          {state.error && (
+            <p role="alert" className="text-sm text-flag-red">
+              {state.error}
+            </p>
+          )}
           <div className="flex gap-2">
             <button
               type="submit"
