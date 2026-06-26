@@ -35,6 +35,20 @@ export function ageLabel(age: number | null | undefined): string {
   return age == null ? "Edad desconocida" : `${age} años`;
 }
 
+/**
+ * Coarse age bucket stored on each Person so the Niños / Adultos Mayores filters
+ * become equality matches (index-friendly) instead of range scans that would
+ * force an in-memory sort. "menor" < 18, "mayor" >= 60, "adulto" in between.
+ */
+export type AgeBand = "menor" | "adulto" | "mayor";
+
+export function ageBand(age: number | null | undefined): AgeBand | null {
+  if (age == null) return null;
+  if (age < 18) return "menor";
+  if (age >= 60) return "mayor";
+  return "adulto";
+}
+
 export function matchesFilter(p: Person, filter: Filter): boolean {
   switch (filter) {
     case "hombres":

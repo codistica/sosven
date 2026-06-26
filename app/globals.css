@@ -78,3 +78,17 @@ body {
     var(--color-flag-red) 66.66% 100%
   );
 }
+
+
+.pic-bg{
+  /* Blue tint layered on top of the photo (first layer paints over the image). */
+  background-image:
+    linear-gradient(
+      to bottom right,
+      rgba(30, 64, 175, 0.85),  /* brand-700 */
+      rgba(11, 31, 77, 0.75)    /* navy */
+    ),
+    url('../public/hero.png');
+  background-size: cover;
+  background-position: center;
+}

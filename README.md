@@ -49,7 +49,7 @@ disabled with a friendly message).
 ### Seed the database
 
 ```bash
-npm run db:indexes   # create indexes
+npm run db:indexes   # create/recreate indexes
 npm run db:seed      # insert the sample personas
 ```
 

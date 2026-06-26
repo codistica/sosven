@@ -27,12 +27,18 @@ export function Panel({
   );
 }
 
+/** Muted "(opcional)" hint shown next to non-required field labels. */
+function OptionalTag() {
+  return <span className="font-normal text-muted">(opcional)</span>;
+}
+
 export function TextField({
   name,
   label,
   type = "text",
   placeholder,
   required,
+  optional,
   full,
   ...rest
 }: {
@@ -41,12 +47,14 @@ export function TextField({
   type?: string;
   placeholder?: string;
   required?: boolean;
+  optional?: boolean;
   full?: boolean;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className={`block ${full ? "sm:col-span-2" : ""}`}>
       <span className="mb-1 block text-sm font-medium text-ink">
         {label} {required && <span className="text-flag-red">*</span>}
+        {optional && <OptionalTag />}
       </span>
       <input
         name={name}
@@ -64,16 +72,20 @@ export function TextAreaField({
   name,
   label,
   placeholder,
+  optional,
   full = true,
 }: {
   name: string;
   label: string;
   placeholder?: string;
+  optional?: boolean;
   full?: boolean;
 }) {
   return (
     <label className={`block ${full ? "sm:col-span-2" : ""}`}>
-      <span className="mb-1 block text-sm font-medium text-ink">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-ink">
+        {label} {optional && <OptionalTag />}
+      </span>
       <textarea name={name} rows={3} placeholder={placeholder} className={`${inputCls} resize-y`} />
     </label>
   );
@@ -83,16 +95,20 @@ export function SelectField({
   name,
   label,
   options,
+  optional,
   full,
 }: {
   name: string;
   label: string;
   options: { value: string; label: string }[];
+  optional?: boolean;
   full?: boolean;
 }) {
   return (
     <label className={`block ${full ? "sm:col-span-2" : ""}`}>
-      <span className="mb-1 block text-sm font-medium text-ink">{label}</span>
+      <span className="mb-1 block text-sm font-medium text-ink">
+        {label} {optional && <OptionalTag />}
+      </span>
       <select name={name} className={inputCls} defaultValue="">
         <option value="" disabled>
           Selecciona…

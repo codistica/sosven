@@ -10,7 +10,10 @@
  *   Adultos Mayores -> age >= 60
  */
 
-export type PersonStatus = "desaparecido" | "encontrado";
+export type PersonStatus = "desaparecido" | "avistado" | "encontrado";
+
+/** Statuses that still count as "missing" (shown in the main directory). */
+export const MISSING_STATUSES: PersonStatus[] = ["desaparecido", "avistado"];
 
 export interface Person {
   _id: string;
@@ -19,6 +22,7 @@ export interface Person {
   firstName: string;
   lastName: string;
   age: number | null;
+  ageBand?: "menor" | "adulto" | "mayor" | null; // derived from age, for fast filtering
   gender: string; // masculino | femenino | otro
   nationality: string | null;
   idDocument: string | null; // cédula
@@ -58,22 +62,29 @@ export interface Sighting {
   personId: string;
   location: string | null;
   note: string | null;
+  reporterName: string | null;
   contact: string | null;
   createdAt: Date;
 }
 
-export interface FoundReport {
+/**
+ * Well-being self-report ("estoy a salvo"). One per cédula. If a person checks
+ * in before anyone files a missing report for them, the eventual report is
+ * created already marked `encontrado`.
+ */
+export interface CheckIn {
   _id: string;
-  personId: string;
-  location: string | null;
-  details: string | null;
-  contact: string | null;
-  status: "pendiente" | "verificado";
+  firstName: string;
+  lastName: string;
+  idDocument: string; // canonical cédula, e.g. "V-12.345.678"
   createdAt: Date;
 }
+
+/** Keyset-pagination cursor: last item's createdAt + _id tiebreaker. */
+export type PersonCursor = { t: string; id: string };
 
 export const COLLECTIONS = {
   persons: "persons",
   sightings: "sightings",
-  foundReports: "found_reports",
+  checkins: "checkins",
 } as const;

@@ -70,6 +70,7 @@ export const samplePersons: Person[] = [
       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=70",
     reporterRelationship: "Esposo",
     ...base,
+    status: "encontrado" as const,
   },
   {
     _id: "33333333-3333-3333-3333-333333333333",
@@ -94,6 +95,7 @@ export const samplePersons: Person[] = [
       "https://images.unsplash.com/photo-1559963110-71b394e7494d?auto=format&fit=crop&w=600&q=70",
     reporterRelationship: "Hijo",
     ...base,
+    status: "encontrado" as const,
   },
   {
     _id: "44444444-4444-4444-4444-444444444444",
@@ -118,6 +120,7 @@ export const samplePersons: Person[] = [
       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=600&q=70",
     reporterRelationship: "Madre",
     ...base,
+    status: "avistado" as const,
   },
   {
     _id: "55555555-5555-5555-5555-555555555555",
@@ -190,6 +193,7 @@ export const samplePersons: Person[] = [
       "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?auto=format&fit=crop&w=600&q=70",
     reporterRelationship: "Tía",
     ...base,
+    status: "encontrado" as const,
   },
   {
     _id: "88888888-8888-8888-8888-888888888888",
@@ -217,4 +221,4 @@ export const samplePersons: Person[] = [
   },
 ];
 
-export const sampleStats = { desaparecidos: 2847, encontrados: 1234 };
+export const sampleStats = { desaparecidos: 2847, avistados: 562, encontrados: 1234 };

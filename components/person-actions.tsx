@@ -1,48 +1,58 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { reportFound, reportSighting, type ActionState } from "@/lib/actions";
+import { useActionState, useEffect, useState } from "react";
+import { reportSighting, type ActionState } from "@/lib/actions";
+import type { Sighting } from "@/lib/db/schema";
+import { formatDate } from "@/lib/format";
 
 const initial: ActionState = { ok: false };
 
-/** Red "¿Encontré a esta persona?" panel that opens a hallazgo form. */
-export function FoundReportPanel({ personId }: { personId: string }) {
+/**
+ * Primary call-to-action on a person's profile: report an "avistamiento"
+ * (sighting). Elegant brand-colored panel that expands into a short form.
+ */
+export function AvistamientoPanel({ personId }: { personId: string }) {
   const [open, setOpen] = useState(false);
-  const [state, action, pending] = useActionState(reportFound, initial);
+  const [state, action, pending] = useActionState(reportSighting, initial);
 
   return (
-    <div className="rounded-xl border border-flag-red/30 bg-flag-red/5 p-5">
-      <h3 className="flex items-center gap-2 font-bold text-flag-red">
+    <div className="overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-brand/5 to-brand/10 p-6">
+      <h3 className="flex items-center gap-2 text-base font-bold text-brand">
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="12" r="3" />
         </svg>
-        ¿Encontré a esta persona?
+        ¿La viste?
       </h3>
       <p className="mt-1 text-sm text-ink/80">
-        Si tienes información sobre su paradero, repórtalo. Nuestro equipo
-        contactará a la familia para verificar.
+        Si crees haber visto a esta persona, reporta un avistamiento. Cada pista
+        ayuda a la familia a seguir el rastro.
       </p>
 
       {state.ok ? (
-        <p className="mt-3 rounded-lg bg-success/10 px-3 py-2 text-sm font-medium text-success">
-          ¡Gracias! Tu reporte fue recibido y será verificado por el equipo SOSVEN.
+        <p className="mt-4 flex items-center gap-2 rounded-lg bg-success/10 px-3 py-2.5 text-sm font-medium text-success">
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Avistamiento registrado. ¡Gracias por colaborar!
         </p>
       ) : !open ? (
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="mt-4 w-full rounded-lg bg-flag-red px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-alert-700"
+          className="mt-4 w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
         >
-          Reportar Hallazgo
+          Reportar un avistamiento
         </button>
       ) : (
         <form action={action} className="mt-4 space-y-3">
           <input type="hidden" name="personId" value={personId} />
-          <Field name="location" label="¿Dónde la viste?" placeholder="Lugar o referencia" />
-          <Textarea name="details" label="Detalles" placeholder="Describe lo que sabes…" />
-          <Field name="contact" label="Tu contacto" placeholder="Teléfono o correo" />
+          <Field name="location" label="¿Dónde la viste?" placeholder="Lugar o punto de referencia" required />
+          <Textarea name="note" label="¿Qué observaste?" placeholder="Describe la situación, hora, con quién estaba…" />
+          <Field name="reporterName" label="Tu nombre" placeholder="Opcional" />
+          <Field name="contact" label="Tu contacto" placeholder="Teléfono o correo (opcional)" />
           {state.error && (
-            <p role="alert" className="text-sm text-flag-red">
+            <p role="alert" className="text-sm font-medium text-flag-red">
               {state.error}
             </p>
           )}
@@ -50,9 +60,9 @@ export function FoundReportPanel({ personId }: { personId: string }) {
             <button
               type="submit"
               disabled={pending}
-              className="flex-1 rounded-lg bg-flag-red px-4 py-2.5 text-sm font-semibold text-white hover:bg-alert-700 disabled:opacity-60"
+              className="flex-1 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
             >
-              {pending ? "Enviando…" : "Enviar reporte"}
+              {pending ? "Enviando…" : "Enviar avistamiento"}
             </button>
             <button
               type="button"
@@ -68,69 +78,139 @@ export function FoundReportPanel({ personId }: { personId: string }) {
   );
 }
 
-/** Secondary "report a sighting" form. */
-export function SightingPanel({ personId }: { personId: string }) {
+/**
+ * Navy counter box with the number of sightings, plus a button that opens a
+ * modal listing each avistamiento and the reporter's contact information.
+ */
+export function SightingsSummary({
+  count,
+  sightings,
+}: {
+  count: number;
+  sightings: Sighting[];
+}) {
   const [open, setOpen] = useState(false);
-  const [state, action, pending] = useActionState(reportSighting, initial);
 
-  if (state.ok) {
-    return (
-      <p className="rounded-lg bg-success/10 px-3 py-2 text-sm font-medium text-success">
-        Avistamiento registrado. Gracias por colaborar.
-      </p>
-    );
-  }
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
 
-  return open ? (
-    <form action={action} className="space-y-3 rounded-xl border border-line bg-white p-4">
-      <input type="hidden" name="personId" value={personId} />
-      <Field name="location" label="Lugar del avistamiento" placeholder="Dirección o referencia" />
-      <Textarea name="note" label="Nota" placeholder="¿Qué observaste?" />
-      <Field name="contact" label="Tu contacto (opcional)" placeholder="Teléfono o correo" />
-      {state.error && <p className="text-sm text-flag-red">{state.error}</p>}
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={pending}
-          className="flex-1 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-        >
-          {pending ? "Enviando…" : "Registrar avistamiento"}
-        </button>
-        <button
-          type="button"
+  return (
+    <div className="rounded-2xl bg-navy p-6 text-center text-white">
+      <div className="text-4xl font-extrabold tabular-nums">{count}</div>
+      <div className="mt-1 text-sm text-white/80">avistamientos reportados</div>
+
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={count === 0}
+        className="mt-4 w-full rounded-lg border border-white/25 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Ver detalles de avistamientos
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Detalles de avistamientos"
           onClick={() => setOpen(false)}
-          className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted hover:bg-black/5"
         >
-          Cancelar
-        </button>
-      </div>
-    </form>
-  ) : (
-    <button
-      type="button"
-      onClick={() => setOpen(true)}
-      className="w-full rounded-lg border border-brand px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
-    >
-      Reportar un avistamiento
-    </button>
+          <div
+            className="max-h-[85vh] w-full max-w-lg overflow-hidden rounded-t-2xl bg-white text-left text-ink shadow-xl sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <h3 className="text-base font-bold text-ink">
+                Avistamientos reportados ({count})
+              </h3>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Cerrar"
+                className="grid h-8 w-8 place-items-center rounded-md text-muted hover:bg-black/5"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="max-h-[70vh] divide-y divide-line overflow-y-auto">
+              {sightings.length === 0 ? (
+                <p className="px-5 py-8 text-center text-sm text-muted">
+                  Aún no hay avistamientos.
+                </p>
+              ) : (
+                sightings.map((s) => (
+                  <article key={s._id} className="px-5 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-semibold text-ink">{s.location ?? "Lugar no indicado"}</p>
+                      <time className="shrink-0 text-xs text-muted">{formatDate(s.createdAt as unknown as string)}</time>
+                    </div>
+                    {s.note && <p className="mt-1 text-sm text-ink/80">{s.note}</p>}
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                      <span className="text-muted">
+                        Reportado por:{" "}
+                        <span className="font-medium text-ink">{s.reporterName ?? "Anónimo"}</span>
+                      </span>
+                      {s.contact && (
+                        <a
+                          href={
+                            s.contact.includes("@")
+                              ? `mailto:${s.contact}`
+                              : `tel:${s.contact.replace(/[^\d+]/g, "")}`
+                          }
+                          className="font-semibold text-brand hover:underline"
+                        >
+                          {s.contact}
+                        </a>
+                      )}
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-function Field({ name, label, placeholder }: { name: string; label: string; placeholder?: string }) {
+function Field({
+  name,
+  label,
+  placeholder,
+  required,
+}: {
+  name: string;
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+}) {
   return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-semibold text-muted">{label}</span>
+    <label className="block text-left">
+      <span className="mb-1 block text-xs font-semibold text-muted">
+        {label} {required && <span className="text-flag-red">*</span>}
+      </span>
       <input
         name={name}
+        required={required}
         placeholder={placeholder}
         className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
       />
     </label>
   );
 }
+
 function Textarea({ name, label, placeholder }: { name: string; label: string; placeholder?: string }) {
   return (
-    <label className="block">
+    <label className="block text-left">
       <span className="mb-1 block text-xs font-semibold text-muted">{label}</span>
       <textarea
         name={name}

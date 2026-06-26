@@ -7,7 +7,7 @@ import { Logo } from "./logo";
 
 const NAV = [
   { href: "/", label: "Inicio" },
-  { href: "/reportar", label: "Reportar Desaparecido" },
+  { href: "/encontrados", label: "Encontrados" },
   { href: "/ayuda", label: "Ayuda" },
 ];
 
@@ -42,6 +42,12 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/checkin"
+            className="hidden rounded-md bg-success-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-success sm:inline-block"
+          >
+            Estoy a Salvo
+          </Link>
           <Link
             href="/reportar"
             className="hidden rounded-md bg-flag-red px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-alert-700 sm:inline-block"
@@ -81,6 +87,22 @@ export function SiteHeader() {
                 {item.label}
               </Link>
             ))}
+            <div className="mt-2 grid gap-2 border-t border-white/10 pt-3">
+              <Link
+                href="/checkin"
+                onClick={() => setOpen(false)}
+                className="rounded-md bg-success-600 px-3 py-2.5 text-center text-sm font-semibold text-white"
+              >
+                Estoy a Salvo
+              </Link>
+              <Link
+                href="/reportar"
+                onClick={() => setOpen(false)}
+                className="rounded-md bg-flag-red px-3 py-2.5 text-center text-sm font-semibold text-white"
+              >
+                Reportar Desaparecido
+              </Link>
+            </div>
           </div>
         </nav>
       )}

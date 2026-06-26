@@ -1,6 +1,6 @@
 import mongoose, { Schema, type Model } from "mongoose";
 import { randomUUID } from "crypto";
-import type { FoundReport, Person, Sighting } from "./schema";
+import type { CheckIn, Person, Sighting } from "./schema";
 
 /**
  * Mongoose models for SOSVEN. We use a string `_id` (a generated UUID) so
@@ -16,6 +16,7 @@ const PersonSchema = new Schema<Person>(
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
     age: { type: Number, default: null },
+    ageBand: { type: String, default: null }, // "menor" | "adulto" | "mayor"
     gender: { type: String, default: "otro" }, // masculino | femenino | otro
     nationality: { type: String, default: "Venezolana" },
     idDocument: { type: String, default: null },
@@ -37,9 +38,8 @@ const PersonSchema = new Schema<Person>(
     photoUrl: { type: String, default: null },
     status: {
       type: String,
-      enum: ["desaparecido", "encontrado"],
+      enum: ["desaparecido", "avistado", "encontrado"],
       default: "desaparecido",
-      index: true,
     },
 
     reporterName: { type: String, default: null },
@@ -50,10 +50,24 @@ const PersonSchema = new Schema<Person>(
   { timestamps: true, collection: "persons" },
 );
 
-// Indexes that back search + the home filters.
+/*
+ * Read-optimized indexes for a high-traffic, deeply-scrolled directory.
+ * The list is always scoped by status and sorted by `createdAt` desc with an
+ * `_id` tiebreaker (keyset pagination), so each filter mode gets a compound
+ * index whose prefix matches its predicate and whose suffix matches the sort —
+ * letting Mongo serve both the filter and the ordering from the index.
+ */
+// Browse within a status (filter = Todos) + status counts for the hero stats.
+PersonSchema.index({ status: 1, createdAt: -1, _id: -1 });
+// Gender filter (Hombres / Mujeres).
+PersonSchema.index({ status: 1, gender: 1, createdAt: -1, _id: -1 });
+// Age filter (Niños / Adultos Mayores) — equality on the bucket so the index
+// also satisfies the sort (no in-memory sort).
+PersonSchema.index({ status: 1, ageBand: 1, createdAt: -1, _id: -1 });
+// Exact cédula lookups: search-by-cédula + check-in identity matching.
+PersonSchema.index({ idDocument: 1 });
+// "Personas vistas cerca" by city.
 PersonSchema.index({ lastSeenCity: 1 });
-PersonSchema.index({ createdAt: -1 });
-PersonSchema.index({ firstName: "text", lastName: "text", lastSeenCity: "text" });
 
 const SightingSchema = new Schema<Sighting>(
   {
@@ -61,35 +75,32 @@ const SightingSchema = new Schema<Sighting>(
     personId: { type: String, required: true, index: true },
     location: { type: String, default: null },
     note: { type: String, default: null },
+    reporterName: { type: String, default: null },
     contact: { type: String, default: null },
   },
   { timestamps: { createdAt: true, updatedAt: false }, collection: "sightings" },
-);
-
-const FoundReportSchema = new Schema<FoundReport>(
-  {
-    _id: { type: String, default: () => randomUUID() },
-    personId: { type: String, required: true, index: true },
-    location: { type: String, default: null },
-    details: { type: String, default: null },
-    contact: { type: String, default: null },
-    status: {
-      type: String,
-      enum: ["pendiente", "verificado"],
-      default: "pendiente",
-    },
-  },
-  { timestamps: { createdAt: true, updatedAt: false }, collection: "found_reports" },
 );
 
 export const PersonModel: Model<Person> =
   (mongoose.models.Person as Model<Person>) ||
   mongoose.model<Person>("Person", PersonSchema);
 
+const CheckInSchema = new Schema<CheckIn>(
+  {
+    _id: { type: String, default: () => randomUUID() },
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
+    // Unique canonical cédula: one self-report per person, and a fast lookup
+    // both here and when reconciling against incoming missing reports.
+    idDocument: { type: String, required: true, unique: true },
+  },
+  { timestamps: { createdAt: true, updatedAt: false }, collection: "checkins" },
+);
+
 export const SightingModel: Model<Sighting> =
   (mongoose.models.Sighting as Model<Sighting>) ||
   mongoose.model<Sighting>("Sighting", SightingSchema);
 
-export const FoundReportModel: Model<FoundReport> =
-  (mongoose.models.FoundReport as Model<FoundReport>) ||
-  mongoose.model<FoundReport>("FoundReport", FoundReportSchema);
+export const CheckInModel: Model<CheckIn> =
+  (mongoose.models.CheckIn as Model<CheckIn>) ||
+  mongoose.model<CheckIn>("CheckIn", CheckInSchema);

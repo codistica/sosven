@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PersonCard } from "@/components/person-card";
 import { StatusBadge } from "@/components/status-badge";
-import { FoundReportPanel, SightingPanel } from "@/components/person-actions";
+import { AvistamientoPanel, SightingsSummary } from "@/components/person-actions";
 import { ShareRow } from "@/components/share-row";
-import { getNearbyPersons, getPerson, getSightingCount } from "@/lib/data";
+import { getNearbyPersons, getPerson, getSightings } from "@/lib/data";
 import { ageLabel, formatDate, fullName } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -21,16 +21,16 @@ export default async function PersonPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ nuevo?: string }>;
+  searchParams: Promise<{ nuevo?: string; salvo?: string }>;
 }) {
   const { id } = await params;
-  const { nuevo } = await searchParams;
+  const { nuevo, salvo } = await searchParams;
   const person = await getPerson(id);
   if (!person) notFound();
 
   const [nearby, sightings] = await Promise.all([
     getNearbyPersons(person),
-    getSightingCount(person._id),
+    getSightings(person._id),
   ]);
 
   const physical: [string, string | null][] = [
@@ -43,8 +43,7 @@ export default async function PersonPage({
     ["Tono de piel", person.skinTone],
   ];
   const personal: [string, string | null][] = [
-    ["Cédula de identidad", person.idDocument],
-    ["Nacionalidad", person.nationality],
+["Nacionalidad", person.nationality],
     ["Última localización conocida", person.lastSeenLocation],
     ["Ciudad", person.lastSeenCity],
     ["Fecha de desaparición", formatDate(person.lastSeenDate)],
@@ -60,12 +59,17 @@ export default async function PersonPage({
         <span className="text-ink">{fullName(person)}</span>
       </nav>
 
-      {nuevo && (
+      {nuevo && salvo ? (
+        <div className="mt-4 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-success">
+          Buenas noticias: esta persona ya había confirmado estar a salvo, así que
+          el reporte se marcó automáticamente como <strong>encontrado</strong>.
+        </div>
+      ) : nuevo ? (
         <div className="mt-4 rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-success">
           Reporte publicado. Gracias por ayudar a difundir la búsqueda. Comparte
           este perfil para llegar a más personas.
         </div>
-      )}
+      ) : null}
 
       <div className="mt-6 grid gap-8 lg:grid-cols-3">
         {/* Main column */}
@@ -131,12 +135,9 @@ export default async function PersonPage({
 
         {/* Sidebar */}
         <aside className="space-y-5">
-          <div className="rounded-2xl bg-navy p-6 text-center text-white">
-            <div className="text-4xl font-extrabold tabular-nums">{sightings}</div>
-            <div className="mt-1 text-sm text-white/80">avistamientos reportados</div>
-          </div>
+          <SightingsSummary count={sightings.length} sightings={sightings} />
 
-          <FoundReportPanel personId={person._id} />
+          <AvistamientoPanel personId={person._id} />
 
           <div className="rounded-xl border border-line bg-white p-5">
             <h3 className="text-xs font-bold uppercase tracking-wide text-muted">
@@ -165,8 +166,6 @@ export default async function PersonPage({
             </h3>
             <ShareRow name={fullName(person)} />
           </div>
-
-          <SightingPanel personId={person._id} />
         </aside>
       </div>
     </div>

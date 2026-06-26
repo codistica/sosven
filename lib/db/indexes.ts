@@ -6,7 +6,7 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import { connectToDatabase } from "./index";
-import { PersonModel, SightingModel, FoundReportModel } from "./models";
+import { PersonModel, SightingModel, CheckInModel } from "./models";
 
 async function main() {
   if (!process.env.MONGODB_URI) {
@@ -16,7 +16,7 @@ async function main() {
   await Promise.all([
     PersonModel.syncIndexes(),
     SightingModel.syncIndexes(),
-    FoundReportModel.syncIndexes(),
+    CheckInModel.syncIndexes(),
   ]);
   console.log("Indexes synced.");
   await mongoose.disconnect();
