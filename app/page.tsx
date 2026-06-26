@@ -1,65 +1,87 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import Link from "next/link";
+import { BrowseControls } from "@/components/browse-controls";
+import { PersonCard } from "@/components/person-card";
+import { Stat } from "@/components/stat";
+import { getStats, searchPersons } from "@/lib/data";
+import { FILTERS, type Filter } from "@/lib/format";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+function asFilter(v: string | undefined): Filter {
+  return FILTERS.some((f) => f.key === v) ? (v as Filter) : "todos";
+}
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; filter?: string }>;
+}) {
+  const sp = await searchParams;
+  const query = sp.q?.trim() ?? "";
+  const filter = asFilter(sp.filter);
+
+  const [stats, results] = await Promise.all([
+    getStats(),
+    searchPersons({ query, filter }),
+  ]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-700 via-brand to-navy text-white">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+          <h1 className="max-w-2xl text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl">
+            Ayúdanos a Reunir Familias
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-3 max-w-2xl text-base text-white/85 sm:text-lg">
+            Busca y reporta personas desaparecidas tras el terremoto en Venezuela.
+            Cada reporte acerca a una familia a su reencuentro.
           </p>
+
+          <div className="mt-8 max-w-2xl">
+            <Suspense fallback={<div className="h-14 rounded-xl bg-white/10" />}>
+              <BrowseControls query={query} filter={filter} />
+            </Suspense>
+          </div>
+
+          <div className="mt-8 flex gap-10">
+            <Stat value={stats.desaparecidos} label="Desaparecidos" />
+            <Stat value={stats.encontrados} label="Encontrados" />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Results */}
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-lg font-bold text-ink">
+            {query ? `Resultados para “${query}”` : "Personas reportadas"}
+          </h2>
+          <span className="text-sm text-muted">
+            {results.length} {results.length === 1 ? "persona" : "personas"}
+          </span>
         </div>
-      </main>
+
+        {results.length === 0 ? (
+          <div className="mt-8 rounded-xl border border-dashed border-line bg-surface p-10 text-center">
+            <p className="font-medium text-ink">No se encontraron personas.</p>
+            <p className="mt-1 text-sm text-muted">
+              Prueba con otro nombre o ciudad, o{" "}
+              <Link href="/reportar" className="font-semibold text-brand hover:underline">
+                reporta una desaparición
+              </Link>
+              .
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
+            {results.map((person) => (
+              <PersonCard key={person._id} person={person} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
